@@ -4,7 +4,7 @@
 ########  CONTACT: yswi@umich.edu ########
 ###########################################
 
-1. DESCRIPTION: This dataset is written in 'dtype=torch.float64' and is compatible with the VIRDO code (). This dataset consists of total 144 deformation scenes from 6 different objects generated through MATLAB. It is divided into 'train' and 'test' dataset, where data['train'][OBJECT IDX = i][DEFORM IDX = j ] and data['test'][OBJECT IDX = i][DEFORM IDX = j ] indicates the same scene, but they are two different subsets of query points.
+1. DESCRIPTION: This dataset is written in 'dtype=torch.float64'. This dataset consists of total 144 deformation scenes from 6 different objects generated through MATLAB. It is divided into 'train' and 'test' dataset, where data['train'][OBJECT IDX = i][DEFORM IDX = j ] and data['test'][OBJECT IDX = i][DEFORM IDX = j ] indicates the same scene, but they are two different subsets of query points.
 
 
 2. STRUCTURE: The dataset structure is as follows:
