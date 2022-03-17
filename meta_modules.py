@@ -1,7 +1,4 @@
-'''Modules for hypernetwork experiments, Paper Sec. 4.4
-'''
 import sys
-sys.path.insert(0,'/home/young/Research/CoRL2021/Implicit_Deformable')
 import modules
 import torch
 from torch import nn
