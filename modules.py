@@ -12,14 +12,6 @@ import torch.utils.data
 from torch.autograd import Variable
 import diff_operators
     
-    
-def Xavier_init(module):
-    for name, param in module.named_parameters():
-        if name.split('.')[-1] == 'weight':
-            torch.nn.init.xavier_normal_( param , gain=nn.init.calculate_gain('relu'))
-
-        if name.split('.')[-1] == 'bias':
-            torch.nn.init.zeros_(param)
 
 class STN3d(nn.Module):
     def __init__(self):
@@ -77,7 +69,6 @@ class PointNetfeat(nn.Module):
         x = x.transpose(2, 1)
         x = torch.bmm(x, trans).float()
         x = x.transpose(2, 1)
-        # x = F.relu(self.bn1(self.conv1(x)))
         x = F.relu(self.conv1(x))
 
         if self.feature_transform:
@@ -90,83 +81,25 @@ class PointNetfeat(nn.Module):
         pointfeat = x
         x = F.relu(self.conv2(x))
         x = self.conv3(x)
-        # x = F.relu(self.bn2(self.conv2(x)))
-        # x = self.bn3(self.conv3(x))
         x = torch.mean(x, 2, keepdim=True)[0]
-#         if epoch < 300:
-#             x = torch.mean(x, 2, keepdim=True)[0]
-#         else : 
-#             x = torch.max(x, 2, keepdim=True)[0]
         x = x.view(-1, 64)
-        # x = x.view(-1, 1024)
         return x
     
-    
-class force_module(nn.Module):
-    def __init__(self, k_in, k_out):
-        super(force_module, self).__init__()
-#         self.fc4 = nn.Linear(64, 32)
-        self.fc5 = nn.Linear(k_in, 32)
-        self.fc6 = nn.Linear(32, 32)
-        self.fc6_2 = nn.Linear(32, 32)
-        self.fc7 = nn.Linear(32, k_out)
-        self.dropout = nn.Dropout(p=0.3)
-        self.relu = nn.ReLU()
-    def forward(self, ft, contact_force):
 
-#         x = torch.cat([x, contact_force.unsqueeze(0)], axis=1).float()
-#         ft = self.relu(self.fc4(x))
-        x = torch.cat([ft, contact_force.unsqueeze(0)], axis=1).float()
-        # x = torch.cat([contact_force.unsqueeze(0)], axis=1).float()
-        x = self.fc5(x)
-        # x = self.fc6(x)
-        # x = self.fc6_2(x)
-        x = self.fc7(x)
-        return x, ft
-    
-    def forward_infer(self, x, contact_force):
-        x = torch.cat([x, contact_force.unsqueeze(0)], axis=1).float()
-        x = self.fc5(x)
-        x = self.fc6(x)
-        return x
     
 class force_mlp(nn.Module):
-    def __init__(self, k_in, k_out):
+    def __init__(self, k_out):
         super(force_mlp, self).__init__()
-        self.fc4 = nn.Linear(k_in, 32)
-#         self.fc4 = nn.Linear(64, 32)
+        self.fc4 = nn.Linear(64, 32)
         self.fc5 = nn.Linear(k_out+3, 32)
        
         self.relu = nn.ReLU()
     def forward(self, ft, contact_force):
         x = self.relu(self.fc4(ft))
         x = torch.cat([x, contact_force.unsqueeze(0)], axis=1).float()
-        
-#         x = torch.cat([ft, contact_force.unsqueeze(0)], axis=1).float()
-        # x = torch.cat([contact_force.unsqueeze(0)], axis=1).float()
         x = self.fc5(x)
-        # x = self.fc6(x)
-        # x = self.fc6_2(x)
-#         x = self.fc7(x)
         return x, ft
-    
-#     def forward_infer(self, x, contact_force):
-#         x = torch.cat([x, contact_force.unsqueeze(0)], axis=1).float()
-#         x = self.fc5(x)
-#         x = self.fc6(x)
-#         return x    
 
-class force_mlp_simple(nn.Module):
-    def __init__(self, k_in, k_out):
-        super(force_mlp_simple, self).__init__()
-        self.fc1 = nn.Linear(k_in, 32)
-        self.fc2 = nn.Linear(32, k_out)
-        self.relu = nn.ReLU()
-        
-    def forward(self,x):
-        x = self.relu(self.fc1(x.float())).float()
-        x = self.fc2(x)
-        return x  
      
 
 class PointNetCls(nn.Module):
@@ -177,12 +110,8 @@ class PointNetCls(nn.Module):
         self.force_mlp = force_mlp(k)
         print(self)
                 
-#         Xavier_init(self)
-
     def forward(self, x, contact_force, epoch):
         self.cnt_ft  = self.feat(x,epoch)
-#         x = F.relu(self.fc4( self.cnt_ft))
-#         x = torch.cat([x, contact_force.unsqueeze(0)], axis=1).float()
         x, self.cnt_ft_low  = self.force_mlp(self.cnt_ft, contact_force)
         return x
     
@@ -190,88 +119,7 @@ class PointNetCls(nn.Module):
         x = self.force_mlp.forward_infer(x, contact_force)
         return x
     
-    
-
-class ForceModule(nn.Module):
-    def __init__(self, k_in, k_out, feature_transform=False, mode = 'complex'):
-        super(ForceModule, self).__init__()
-        
-        self.mode = mode
-        
-        if self.mode == 'simple':
-            self.force_mlp = force_mlp_simple(k_in, k_out)
-        else: 
-            self.force_mlp = force_module(k_in, k_out)
-        print(self)
-    
-    def forward(self, cnt_ft, contact_force = None):
-        if self.mode == 'simple':
-            x  = self.force_mlp(cnt_ft)
-        else :
-            x, self.cnt_ft_low  = self.force_mlp(cnt_ft, contact_force)
-        return x
-
-    
-class Energy(nn.Module):  
-    def __init__(self, dim_in, hf = 64, dim_out=1):
-        super(Energy, self).__init__()
-        self.fc1 = nn.Linear(dim_in, hf)
-        self.fc2 = nn.Linear(hf, hf)
-        self.fc3 = nn.Linear(hf, hf)
-        self.fc4 = nn.Linear(hf, dim_out)
-        self.relu = nn.ReLU()
-        print(self)
-#         Xavier_init(self)
-        
-        
-    def forward(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
-#         x = self.fc3(x)
-        x = self.relu(self.fc3(x))
-        x = self.fc4(x)
-        return x
-    
-    
-    
-
-class MLP(nn.Module):  
-    def __init__(self, dim_in, hf = 64, dim_out=6):
-        super(MLP, self).__init__()
-        self.fc1 = nn.Linear(dim_in, hf)
-        self.fc2 = nn.Linear(hf, hf)
-        self.fc3 = nn.Linear(hf, hf)
-        self.fc4 = nn.Linear(hf, dim_out)
-        self.relu = nn.ReLU()
-        print(self)
-#         Xavier_init(self)
-        
-        
-    def forward(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
-        x = self.relu(self.fc3(x))
-        x = self.fc4(x)
-        return x
-    
-    
-
-class CntDecoder(nn.Module):  
-    def __init__(self, dim_in, dim_out=6):
-        super(CntDecoder, self).__init__()
-        self.fc1 = nn.Linear(dim_in, 64)
-        self.fc2 = nn.Linear(64, 32)
-        self.fc3 = nn.Linear(32, dim_out)
-        self.relu = nn.ReLU()
-        print(self)
-#         Xavier_init(self)
-        
-        
-    def forward(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+ 
 
 class BatchLinear(nn.Linear, MetaModule):
     '''A linear meta-layer that can deal with batched weight matrices and biases, as for instance output by a
@@ -326,14 +174,7 @@ class FCBlock(MetaModule):
             self.__dict__[key] = value
 
 
-        nls_and_inits = {'sine':(Sine(), sine_init, first_layer_sine_init),
-                         'relu':(nn.ReLU(inplace=True), init_weights_normal, None),
-                         'leaky':(nn.LeakyReLU( 0.05, inplace=True), init_weights_normal, None),
-                         'sigmoid':(nn.Sigmoid(), init_weights_xavier, None),
-                         'tanh':(nn.Tanh(), init_weights_xavier, None),
-                         'selu':(nn.SELU(inplace=True), init_weights_selu, None),
-                         'softplus':(nn.Softplus(), init_weights_normal, None),
-                         'elu':(nn.ELU(inplace=True), init_weights_elu, None)}
+        nls_and_inits = {'relu':(nn.ReLU(inplace=True), init_weights_normal, None)}
 
         nl, nl_weight_init, first_layer_init = nls_and_inits[nonlinearity]
         if weight_init is not None:  # Overwrite weight init if passed
@@ -343,41 +184,21 @@ class FCBlock(MetaModule):
 
         # single layer
         self.net = []
-        if num_hidden_layers == -1:
-            if outermost_linear:
-                self.net.append(MetaSequential(BatchLinear(in_features, out_features), nl))
+        self.net.append(MetaSequential(BatchLinear(in_features, hidden_features), nl))
+        
+        for i in range(num_hidden_layers):
+            if i != self.latent_in - 1:
+                self.net.append(MetaSequential(
+                    BatchLinear(hidden_features, hidden_features), nl))
             else:
-                self.net.append(MetaSequential(BatchLinear(in_features, out_features)))
+                self.net.append(MetaSequential(
+                    BatchLinear(hidden_features + in_features, hidden_features), nl))
+
+        if outermost_linear:
+            self.net.append(
+                MetaSequential(BatchLinear(hidden_features, out_features), nl))
         else:
-            if drop_out:
-                self.net.append(MetaSequential(BatchLinear(in_features, hidden_features), nl, nn.Dropout(0.2)))
-                for i in range(num_hidden_layers):
-                    if i != self.latent_in-1:
-                        self.net.append(MetaSequential(BatchLinear(hidden_features, hidden_features), nl, nn.Dropout(0.2)))
-                    else:
-                        self.net.append(MetaSequential(
-                            BatchLinear(hidden_features + in_features, hidden_features), nl))
-                if outermost_linear:
-                    self.net.append(
-                        MetaSequential(BatchLinear(hidden_features, out_features), nl, nn.Dropout(0.2)))
-                else:
-                    self.net.append(MetaSequential(BatchLinear(hidden_features, out_features)))
-
-            else:
-                self.net.append(MetaSequential(BatchLinear(in_features, hidden_features), nl))
-                for i in range(num_hidden_layers):
-                    if i != self.latent_in - 1:
-                        self.net.append(MetaSequential(
-                            BatchLinear(hidden_features, hidden_features), nl))
-                    else:
-                        self.net.append(MetaSequential(
-                            BatchLinear(hidden_features + in_features, hidden_features), nl))
-
-                if outermost_linear:
-                    self.net.append(
-                        MetaSequential(BatchLinear(hidden_features, out_features), nl))
-                else:
-                    self.net.append(MetaSequential(BatchLinear(hidden_features, out_features)))
+            self.net.append(MetaSequential(BatchLinear(hidden_features, out_features)))
 
         self.net = MetaSequential(*self.net)
         if self.weight_init is not None:
@@ -385,7 +206,6 @@ class FCBlock(MetaModule):
 
         if first_layer_init is not None: # Apply special initialization to first layer, if applicable.
             self.net[0].apply(first_layer_init)
-
 
 
     def forward(self, coords, params=None, **kwargs):
@@ -448,45 +268,15 @@ class SingleBVPNet(MetaModule):
             params = OrderedDict(self.named_parameters())
 
 
-        # DeepSDF
-#         print("mode",'model_out' in model_input)
-        if self.mode == 'concat':
-            coords_org = model_input['coords'].clone().detach().requires_grad_(True)
-            batch_vecs = model_input['embedding'].repeat(coords_org.size()[1], 1).unsqueeze(0)
-            input = torch.cat([batch_vecs, coords_org], dim=2)
-
-        ## Fourier-HypoNetwork
-        elif self.mode == 'fourier':
-            if 'model_out' in model_input:
-                # print("second")
-                coords_org = model_input['coords']
-                input = self.input_encoder(model_input['model_out'].squeeze(0), self.avals, self.bvals).unsqueeze(0)
-
-            else :
-                # print("first")
-                coords_org = model_input['coords'].clone().detach().requires_grad_(True)
-                input = self.input_encoder(coords_org.squeeze(0), self.avals, self.bvals).unsqueeze(0)
-
         ## HypoNetwork
-        elif 'model_out' in model_input:
-#             print('model_out')
+        if 'model_out' in model_input:
             coords_org = model_input['coords']
             input = model_input['model_out']
         else:
-#             print("init")
             coords_org = model_input['coords'].clone().detach().requires_grad_(True)
             input = coords_org
 
-            
-        ## When it is a Single input-output layer
-        if self.num_hidden_layers == -1:
-            x = self.net.net[0][0](input, params=get_subdict(params, 'net'), layer_num=0)
-            if self.outermost_linear:
-                x = self.net.net[0][1](x)
-                
-            return {'model_in': coords_org, 'model_out': x}
 
-        ## When it has two or more layers
         for layer in range(self.num_hidden_layers + 2):
             if layer == 0:
                 x = self.net.net[0][0](input, params= get_subdict(params,'net'), layer_num= layer)
@@ -496,11 +286,6 @@ class SingleBVPNet(MetaModule):
                     pass
                 if self.drop_out:
                     x = self.net.net[0][2](x)
-
-            elif layer == self.latent_in:
-                x = torch.cat([x, input], 2)
-                x = self.net.net[layer][0](x, params= get_subdict(params,'net'),layer_num= layer)
-                x = self.net.net[layer][1](x)
 
             elif layer == self.num_hidden_layers + 1:
 
@@ -515,8 +300,7 @@ class SingleBVPNet(MetaModule):
                 x = self.net.net[layer][1](x)
                 if self.drop_out:
                     x = self.net.net[layer][2](x)
-
-#         print("module side", diff_operators.gradient(x, coords_org))   
+                      
         return {'model_in': coords_org, 'model_out': x}
 
     def forward_with_activations(self, model_input):
