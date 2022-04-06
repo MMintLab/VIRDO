@@ -150,16 +150,16 @@ def convert_sdf_samples_to_ply(
     el_verts = plyfile.PlyElement.describe(verts_tuple, "vertex")
     el_faces = plyfile.PlyElement.describe(faces_tuple, "face")
     
-
-    ply_data = plyfile.PlyData([el_verts, el_faces])
-    logging.debug("saving mesh to %s" % (ply_filename_out))
-    ply_data.write(ply_filename_out)
-    print(os.getcwd(), ply_filename_out, "saved")
-    logging.debug(
-        "converting to ply format and writing to file took {} s".format(
-            time.time() - start_time
+    if ply_filename_out is not None:
+        ply_data = plyfile.PlyData([el_verts, el_faces])
+        logging.debug("saving mesh to %s" % (ply_filename_out))
+        ply_data.write(ply_filename_out)
+        print(os.getcwd(), ply_filename_out, "saved")
+        logging.debug(
+            "converting to ply format and writing to file took {} s".format(
+                time.time() - start_time
+            )
         )
-    )
     
     return mesh_points
     
