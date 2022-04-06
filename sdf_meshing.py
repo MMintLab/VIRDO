@@ -15,8 +15,6 @@ def create_mesh(
     decoder, filename, N=256, max_batch=40 ** 3, offset=None, scale=None, output_return = True, verbose = True
 ):
     start = time.time()
-    ply_filename = filename
-
 
 
     # NOTE: the voxel_origin is actually the (bottom, left, down) corner, not the middle
@@ -58,34 +56,28 @@ def create_mesh(
             .detach()
             .cpu()
         )
-#         normals[head : min(head + max_batch, num_samples),:] = diff_operators.gradient(output['model_out'], output['model_in']).detach().cpu()
         head += max_batch
         
         del output['model_out']
         del output['model_in']
         torch.cuda.empty_cache()
         
-#     eps = 1e-5
-#     idx = np.where(abs(samples[:,3])<eps)[0]
-#     pointcloud_stale = np.concatenate([samples[idx,:3],normals[idx,:]], axis=1)
-    
-        
-#     pointcloud_stale[:,3:6] = pointcloud_stale[:,3:6]/np.linalg.norm(pointcloud_stale[:,3:6], axis=1, keepdims = True)
-#     write_files(ply_filename, pointcloud_stale)
+
     sdf_values = samples[:, 3]
     sdf_values = sdf_values.reshape(N, N, N)
 
     end = time.time()
     print("sampling takes: %f" % (end - start))
 
-    
-    
+    if filename is not None:
+        filename = filename + ".ply"
+
     
     mesh_points = convert_sdf_samples_to_ply(
         sdf_values.data.cpu(),
         voxel_origin,
         voxel_size,
-        ply_filename + ".ply",
+        filename,
         offset,
         scale,
         output_return= output_return,
