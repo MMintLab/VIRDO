@@ -51,101 +51,21 @@ class HyperNetwork(nn.Module):
         return params
 
 
-class hypo_shape(nn.Module):
+class virdo_hypernet(nn.Module):
     '''A canonical 2D representation hypernetwork mapping 2D coords to out_features.'''
-    def __init__(self, in_features, out_features, latent_dim = 256, start_flag=False, **kwargs):
+    def __init__(self, in_features, out_features, hyper_in_features = 256, hl = 2, **kwargs):
         super().__init__()
-        hf = 256
-        for key, value in kwargs.items():
-            self.__dict__[key] = value
-
-        self.start_flag = start_flag
-
-        if self.input_encoder is None:
-          self.module1 = modules.SingleBVPNet(out_features=hf, type='relu', mode='no_enc',
-                                             in_features=in_features,
-                                             hidden_features=hf, num_hidden_layers=0, outermost_linear=True, drop_out = False)
-          self.module2 = modules.SingleBVPNet(out_features=out_features, type='relu', mode='hypo',in_features=hf,
-                                             hidden_features=hf, num_hidden_layers=0,outermost_linear= False, drop_out = False)
-          
-          self.hyper_net = HyperNetwork(hyper_in_features=latent_dim, hyper_hidden_layers=0,hyper_hidden_features=256,
-                                      hypo_module=self.module2,drop_out = False)
-            
-        else:
-          self.shared = modules.SingleBVPNet(out_features=hf, type='relu', mode='fourier',
-                                             in_features=in_features,
-                                             hidden_features=hf, num_hidden_layers=0, outermost_linear=True, drop_out = False,
-                                           input_encoder = self.input_encoder, avals= self.avals, bvals = self.bvals)
-          self.tailored = modules.SingleBVPNet(out_features=out_features, type='relu', mode='hypo',in_features=hf,
-                                             hidden_features=hf, num_hidden_layers=0,outermost_linear= False, drop_out = False)
-
-          self.hyper_net = HyperNetwork(hyper_in_features=latent_dim, hyper_hidden_layers=0, hyper_hidden_features=256,
-                                      hypo_module=self.tailored,drop_out = False)
-
-
-
-        print(self)
-
-    def freeze_hypernet(self):
-        for param in self.hyper_net.parameters():
-            param.requires_grad = False
-
-    def get_hypo_net_weights(self, model_input):
-        pixels, coords = model_input['img_sub'], model_input['coords_sub']
-        ctxt_mask = model_input.get('ctxt_mask', None)
-        embedding = self.set_encoder(coords, pixels, ctxt_mask=ctxt_mask)
-        hypo_params = self.hyper_net(embedding)
-        return hypo_params, embedding
-
-    def forward(self, model_input):
-
-        if 'model_out' in model_input:
-            # print("secxsond module")
-            module1_input = {'coords': model_input['coords'], 'model_out': model_input['model_out']}  # main
-        else:
-            # print("First module")
-            module1_input = {'coords' : model_input['coords']} #shape only
-        
-        if self.input_encoder is not None:
-            module_output = self.shared(module1_input)
-            model_input_ = { 'model_out': module_output['model_out'], 'coords' : module_output['model_in']}
-            embedding = model_input['embedding']
-            
-            hypo_params = self.hyper_net(embedding)
-            model_output_ = self.tailored(model_input_, params=hypo_params)
-            
-            
-            return {'model_in':model_output_['model_in'], 'model_out':model_output_['model_out'],'latent_vec':embedding,'hypo_params':hypo_params}
-
-            
-            
-            
-            
-        module_output = self.module1(module1_input)
-        model_input_ = { 'model_out': module_output['model_out'], 'coords' : module_output['model_in']}
-        embedding = model_input['embedding']
-        hypo_params = self.hyper_net(embedding)
-        model_output_ = self.hypo_net(model_input_, params=hypo_params)
-
-        return {'model_in':model_output_['model_in'], 'model_out':model_output_['model_out'], 'latent_vec':embedding,
-                'hypo_params':hypo_params}
-
-class hypo_deformation(nn.Module):
-    '''A canonical 2D representation hypernetwork mapping 2D coords to out_features.'''
-    def __init__(self, in_features, out_features, latent_dim = 256, **kwargs):
-        super().__init__()
-        hf = 256
+        self.hl = hl
         for key, value in kwargs.items():
             self.__dict__[key] = value
 
         self.hypo_net = modules.SingleBVPNet(out_features=out_features, type='relu', mode='hypo',in_features= in_features,
-                                             hidden_features=hf, num_hidden_layers=2, outermost_linear= False, drop_out = False)
+                                             hidden_features=256, num_hidden_layers=self.hl, outermost_linear= False, drop_out = False)
             
 
-        self.hyper_net = HyperNetwork(hyper_in_features=latent_dim, hyper_hidden_layers=0, hyper_hidden_features=hf,
+        self.hyper_net = HyperNetwork(hyper_in_features=hyper_in_features, hyper_hidden_layers=0, hyper_hidden_features=256,
                                       hypo_module=self.hypo_net, drop_out = False)
 
-        print(self)
 
 
     def forward(self, model_input):
