@@ -180,8 +180,12 @@ class FCBlock(MetaModule):
         self.net.append(MetaSequential(BatchLinear(in_features, hidden_features), nl))
         
         for i in range(num_hidden_layers):
-            self.net.append(MetaSequential(
-                BatchLinear(hidden_features + in_features, hidden_features), nl))
+            if i != self.latent_in - 1:
+                self.net.append(MetaSequential(
+                    BatchLinear(hidden_features, hidden_features), nl))
+            else:
+                self.net.append(MetaSequential(
+                    BatchLinear(hidden_features + in_features, hidden_features), nl))
 
         if outermost_linear:
             self.net.append(
@@ -229,6 +233,7 @@ class FCBlock(MetaModule):
 
 
 
+
 class SingleBVPNet(MetaModule):
     '''A canonical representation network for a BVP.'''
 
@@ -255,7 +260,6 @@ class SingleBVPNet(MetaModule):
         if params is None:
             params = OrderedDict(self.named_parameters())
 
-
         ## HypoNetwork
         if 'model_out' in model_input:
             coords_org = model_input['coords']
@@ -265,6 +269,7 @@ class SingleBVPNet(MetaModule):
             input = coords_org
 
 
+        ## When it has two or more layers
         for layer in range(self.num_hidden_layers + 2):
             if layer == 0:
                 x = self.net.net[0][0](input, params= get_subdict(params,'net'), layer_num= layer)
@@ -274,6 +279,11 @@ class SingleBVPNet(MetaModule):
                     pass
                 if self.drop_out:
                     x = self.net.net[0][2](x)
+
+            elif layer == self.latent_in:
+                x = torch.cat([x, input], 2)
+                x = self.net.net[layer][0](x, params= get_subdict(params,'net'),layer_num= layer)
+                x = self.net.net[layer][1](x)
 
             elif layer == self.num_hidden_layers + 1:
 
@@ -288,7 +298,7 @@ class SingleBVPNet(MetaModule):
                 x = self.net.net[layer][1](x)
                 if self.drop_out:
                     x = self.net.net[layer][2](x)
-                      
+ 
         return {'model_in': coords_org, 'model_out': x}
 
     def forward_with_activations(self, model_input):
@@ -296,9 +306,6 @@ class SingleBVPNet(MetaModule):
         coords = model_input['coords'].clone().detach().requires_grad_(True)
         activations = self.net.forward_with_activations(coords)
         return {'model_in': coords, 'model_out': activations.popitem(), 'activations': activations}
-
-
-
 
 
 
