@@ -100,6 +100,10 @@ class force_mlp(nn.Module):
         x = self.fc2(x)
         return x, ft
 
+    def forward_infer(self, ft, contact_force):
+        x = torch.cat([ft, contact_force], axis=1).float()
+        x = self.fc2(x)
+        return x, ft
      
 
 class PointNetCls(nn.Module):
