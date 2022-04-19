@@ -111,9 +111,6 @@ class PointNetCls(nn.Module):
         super(PointNetCls, self).__init__()
         self.feat = PointNetfeat(global_feat=True)
         self.force_mlp = force_mlp(d_cnt_code , d_force_emb )
-        print(self)
-                
-#         Xavier_init(self)
 
     def forward(self, x, contact_force, epoch):
         x  = self.feat(x, epoch)
@@ -155,14 +152,6 @@ class BatchLinear(nn.Linear, MetaModule):
         return output
 
 
-class Sine(nn.Module):
-    def __init(self):
-        super().__init__()
-
-    def forward(self, input):
-        # See paper sec. 3.2, final paragraph, and supplement Sec. 1.5 for discussion of factor 30
-        return torch.sin(30 * input)
-
 
 class FCBlock(MetaModule):
     '''A fully connected neural network that also allows swapping out the weights when used with a hypernetwork.
@@ -191,12 +180,8 @@ class FCBlock(MetaModule):
         self.net.append(MetaSequential(BatchLinear(in_features, hidden_features), nl))
         
         for i in range(num_hidden_layers):
-            if i != self.latent_in - 1:
-                self.net.append(MetaSequential(
-                    BatchLinear(hidden_features, hidden_features), nl))
-            else:
-                self.net.append(MetaSequential(
-                    BatchLinear(hidden_features + in_features, hidden_features), nl))
+            self.net.append(MetaSequential(
+                BatchLinear(hidden_features + in_features, hidden_features), nl))
 
         if outermost_linear:
             self.net.append(
@@ -265,7 +250,6 @@ class SingleBVPNet(MetaModule):
         self.net = FCBlock(in_features=in_features, out_features=out_features, num_hidden_layers=num_hidden_layers,
                            hidden_features=hidden_features, outermost_linear= self.outermost_linear, nonlinearity=type, latent_in = self.latent_in,
                            drop_out = self.drop_out)
-        print(self)
 
     def forward(self, model_input, params=None):
         if params is None:
