@@ -1,5 +1,5 @@
 # VIRDO: Visio-tactile Implicit Representations of Deformable Objects
-This is a github repository of a [project](https://arxiv.org/abs/2202.00868), ICRA 2022.
+This is a github repository of a [project](https://arxiv.org/abs/2202.00868) (ICRA 2022).
 Codes are based on [siren](https://github.com/vsitzmann/siren) and [pointnet](https://github.com/charlesq34/pointnet) repositories.
 
 
