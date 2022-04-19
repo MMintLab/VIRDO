@@ -103,22 +103,22 @@ class force_mlp(nn.Module):
      
 
 class PointNetCls(nn.Module):
-    def __init__(self, k=2, feature_transform=False):
+    def __init__(self, d_cnt_code , d_force_emb ):
         super(PointNetCls, self).__init__()
-        self.feature_transform = feature_transform  
-        self.feat = PointNetfeat(global_feat=True, feature_transform=feature_transform)
-        self.force_mlp = force_mlp(k)
+        self.feat = PointNetfeat(global_feat=True)
+        self.force_mlp = force_mlp(d_cnt_code , d_force_emb )
         print(self)
                 
+#         Xavier_init(self)
+
     def forward(self, x, contact_force, epoch):
-        self.cnt_ft  = self.feat(x,epoch)
-        x, self.cnt_ft_low  = self.force_mlp(self.cnt_ft, contact_force)
+        x  = self.feat(x, epoch)
+        x, self.cnt_ft  = self.force_mlp(x, contact_force)
         return x
     
     def forward_infer(self, x, contact_force):
         x = self.force_mlp.forward_infer(x, contact_force)
         return x
-    
  
 
 class BatchLinear(nn.Linear, MetaModule):
