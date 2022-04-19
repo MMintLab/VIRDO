@@ -1,7 +1,4 @@
-'''Modules for hypernetwork experiments, Paper Sec. 4.4
-'''
 import sys
-sys.path.insert(0,'/home/young/Research/CoRL2021/Implicit_Deformable')
 import modules
 import torch
 from torch import nn
@@ -140,16 +137,10 @@ class hypo_deformation(nn.Module):
         hf = 256
         for key, value in kwargs.items():
             self.__dict__[key] = value
-        
-        if self.input_encoder is None:
-            self.hypo_net = modules.SingleBVPNet(out_features=out_features, type='leaky', mode='hypo',in_features= in_features,
+
+        self.hypo_net = modules.SingleBVPNet(out_features=out_features, type='relu', mode='hypo',in_features= in_features,
                                              hidden_features=hf, num_hidden_layers=2, outermost_linear= False, drop_out = False)
             
-
-        else:
-            self.hypo_net = modules.SingleBVPNet(out_features=out_features, type='relu', mode='hypo',in_features=in_features,
-                                             hidden_features=hf, num_hidden_layers=2,outermost_linear= False,
-                                             input_encoder = self.input_encoder, avals= self.avals, bvals = self.bvals)
 
         self.hyper_net = HyperNetwork(hyper_in_features=latent_dim, hyper_hidden_layers=0, hyper_hidden_features=hf,
                                       hypo_module=self.hypo_net, drop_out = False)
