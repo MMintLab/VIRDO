@@ -88,16 +88,16 @@ class PointNetfeat(nn.Module):
 
     
 class force_mlp(nn.Module):
-    def __init__(self, k_out):
+    def __init__(self, d_cnt_code , d_force_emb ):
         super(force_mlp, self).__init__()
-        self.fc4 = nn.Linear(64, 32)
-        self.fc5 = nn.Linear(k_out+3, 32)
+        self.fc1 = nn.Linear(64, d_cnt_code)
+        self.fc2 = nn.Linear(d_cnt_code+3,  d_force_emb)
        
         self.relu = nn.ReLU()
     def forward(self, ft, contact_force):
-        x = self.relu(self.fc4(ft))
-        x = torch.cat([x, contact_force.unsqueeze(0)], axis=1).float()
-        x = self.fc5(x)
+        ft = self.relu(self.fc1(ft))
+        x = torch.cat([ft, contact_force], axis=1).float()
+        x = self.fc2(x)
         return x, ft
 
      
