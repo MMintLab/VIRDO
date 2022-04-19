@@ -1,0 +1,10 @@
+name: virdo
+dependencies:
+  - python=3.8.11 
+  - pytorch=1.7.0
+  - torchvision=0.8.1 
+  - matplotlib=3.4.3
+  - pytorch3d=0.5.0 
+  - scipy=1.7.1
+  - open3d=0.13.0 
+  - tqdm=4.62.1
