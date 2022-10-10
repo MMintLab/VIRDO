@@ -18,9 +18,6 @@ pip install scikit-image
 ## Step 1: Download pretrained model and dataset
 Make sure to install wget ```$ apt-get install wget``` and unzip ```$ apt-get install unzip```
 
-### Step 1: Download pretrained model and dataset
-Makesure to install curl ```$ apt-get install curl``` and unzip ```$ apt-get install unzip```
-
 ```angular2html
 source download.sh
 download_dataset
