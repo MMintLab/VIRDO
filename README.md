@@ -39,3 +39,8 @@ Alternatively, you can manually download the datasets and pretrained models from
 ```
 python pretrain.py --name <log name> --gpu_id 0
 ```
+If you want to check the result of your pretrained model, 
+```
+python pretrain.py --checkpoints_dir <dir> --gpu_id 0
+```
+then you will see the nominal reconstructions in /output/ directory.
