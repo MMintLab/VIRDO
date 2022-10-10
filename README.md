@@ -1,4 +1,7 @@
 # VIRDO
+<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+[![CodeQL](https://github.com/MMintLab/VIRDO/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/MMintLab/VIRDO/actions/workflows/codeql-analysis.yml)
+
 This is a github repository of a [project](https://arxiv.org/abs/2202.00868) (ICRA 2022).
 Codes are based on [siren](https://github.com/vsitzmann/siren) and [pointnet](https://github.com/charlesq34/pointnet) repositories.
 
