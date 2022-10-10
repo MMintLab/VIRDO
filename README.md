@@ -16,15 +16,13 @@ pip install plyfile==0.7.4
 pip install scikit-image
 ```
 
-## Preparation
-### Step 1: Download pretrained model and dataset
+## Step 1: Download pretrained model and dataset
 Makesure to install curl ```$ apt-get install curl``` and unzip ```$ apt-get install unzip```
 ```angular2html
 source download.sh
 download_dataset
 download_pretrained
 ```
-### (Optionally) Manual
 Alternatively, you can manually download the datasets and pretrained models from [here](https://www.dropbox.com/sh/4gnme6f0srhnk23/AAABlA6n8cfyo-GsaiDEqLoba?dl=0). Then put the files as below:
 ```
 ── VIRDO
