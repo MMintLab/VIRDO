@@ -4,6 +4,11 @@
 ```angular2html
 conda create -n virdo python=3.8
 conda activate virdo
+conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 cudatoolkit=11.0 -c pytorch
+conda install pytorch3d=0.5.0 -c pytorch3d
+pip install open3d==0.14.1
+pip install plyfile==0.7.4
+pip install scikit-image
 ```
 ## Colab Examples
 ### Reconstruction & Latent Space Composition
@@ -15,17 +20,7 @@ conda activate virdo
 
 
 ## Preparation
-Datasets and pretrained models can be downloaded from [here](https://www.dropbox.com/sh/4gnme6f0srhnk23/AAABlA6n8cfyo-GsaiDEqLoba?dl=0). Then put the  files as below:
-```
-conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 cudatoolkit=11.0 -c pytorch
-conda install pytorch3d=0.5.0 -c pytorch3d
-pip install open3d==0.14.1
-pip install plyfile==0.7.4
-pip install scikit-image
-```
-
-
-## Step 1: Download pretrained model and dataset
+### Step 1: Download pretrained model and dataset
 Makesure to install curl ```$ apt-get install curl``` and unzip ```$ apt-get install unzip```
 ```angular2html
 source download.sh
