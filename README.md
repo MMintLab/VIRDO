@@ -1,6 +1,5 @@
 # VIRDO
 
-<<<<<<< HEAD
 ## Step 0: Set up the environment
 ```angular2html
 conda create -n virdo python=3.8
