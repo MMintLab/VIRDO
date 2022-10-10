@@ -1,4 +1,7 @@
 # VIRDO
+This is a github repository of a [project](https://arxiv.org/abs/2202.00868) (ICRA 2022).
+Codes are based on [siren](https://github.com/vsitzmann/siren) and [pointnet](https://github.com/charlesq34/pointnet) repositories.
+
 ## Quick Start
 **Reconstruction & latent space composition** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/15T89qRkZuOFfcHYEa24mlZUuFeni1QqI#scrollTo=izxG2oGAriLK&uniqifier=1)
 
