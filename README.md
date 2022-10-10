@@ -15,22 +15,11 @@ pip install plyfile==0.7.4
 pip install scikit-image
 ```
 
-
 ## Step 1: Download pretrained model and dataset
 Make sure to install wget ```$ apt-get install wget``` and unzip ```$ apt-get install unzip```
-=======
-## Colab Examples
-### Reconstruction & Latent Space Composition
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/15T89qRkZuOFfcHYEa24mlZUuFeni1QqI#scrollTo=izxG2oGAriLK&uniqifier=1)
-
-### Inference Using Partial Pointcloud
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ZY5LVsKR8qN99C0EeyyqVnsWWg4v6vPN#scrollTo=f53ea8fc)
-
-
-## Preparation
 ### Step 1: Download pretrained model and dataset
 Makesure to install curl ```$ apt-get install curl``` and unzip ```$ apt-get install unzip```
+
 ```angular2html
 source download.sh
 download_dataset
