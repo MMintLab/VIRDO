@@ -46,6 +46,7 @@ If you want to check the result of your pretrained model,
 ```
 python pretrain.py --checkpoints_dir <dir> --gpu_id 0
 ```
+
 then you will see the nominal reconstructions in /output/ directory.
 
 
@@ -53,3 +54,5 @@ then you will see the nominal reconstructions in /output/ directory.
 ```angular2html
 python train.py --pretrain_path <path>  --checkpoints_dir <dir>
 ```
+then you will see the nominal reconstructions in /output/ directory.
+
