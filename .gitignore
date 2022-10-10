@@ -4,3 +4,5 @@
 *.pth
 .idea
 __pycache__/
+.idea
+

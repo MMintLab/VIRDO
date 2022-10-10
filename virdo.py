@@ -3,10 +3,7 @@ import os
 from tqdm.autonotebook import tqdm
 from tqdm import trange
 import torch
-<<<<<<< HEAD
 from pytorch3d.loss import chamfer_distance
-=======
->>>>>>> no lfs
 
 from utilities.train_util import validation_3d, make_dir
 import loss_functions, modules
@@ -55,9 +52,7 @@ class VirdoModule:
         self.object_model.to(DEVICE)
         self.object_model.float()
 
-<<<<<<< HEAD
 
-=======
         ## Deformation Module form pretrained
 
         self.deformation_module = meta_modules.virdo_hypernet(
@@ -70,7 +65,6 @@ class VirdoModule:
         self.classifier_model = modules.PointNetCls(
             d_cnt_code=self.contact_emb_size, d_force_emb=self.deformation_code_size
         ).to(DEVICE)
->>>>>>> no lfs
 
     def pretraining_result(self, pretrained_path, save_dir):
         self.from_pretraining(pretrained_path)
@@ -208,8 +202,6 @@ class VirdoModule:
                     },
                     os.path.join(checkpoints_dir, f"shape_latest.pth"),
                 )
-<<<<<<< HEAD
-
 
     def from_maintraining(self, main_trained_dir):
 
@@ -369,6 +361,3 @@ class VirdoModule:
                             'force_model':  self.force_model.state_dict(),
                             "optimizer_state_dict": self.optims.state_dict()},
                             os.path.join(checkpoints_dir, f'main_latest.pth'))
-
-=======
->>>>>>> no lfs
