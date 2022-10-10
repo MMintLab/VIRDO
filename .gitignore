@@ -1,0 +1,6 @@
+*.ply
+*.pickle
+*.zip
+*.pth
+.idea
+__pycache__/
