@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--name", default="pretrain")
 parser.add_argument("--gpu_id", default=-1, type=int)
 parser.add_argument("--pretrain_path", default="logs")
-parser.add_argument("--epoch", default=40001, type=int)
+parser.add_argument("--epoch", default=4001, type=int)
 parser.add_argument(
     "--from_pretrained",
     default=None,
@@ -27,7 +27,6 @@ parser.add_argument(
     help="Path to the pretrained model. If None, start training from scratch",
 )
 opt = parser.parse_args()
-#
 
 
 DEVICE = "cpu" if opt.gpu_id < 0 else "cuda"
@@ -50,4 +49,4 @@ VM = VirdoModule(data_dict["train"])
 model_directory = os.path.join(root_path, "logs", opt.name)
 checkpoints_dir = os.path.join(model_directory, "checkpoints")
 
-VM.maintraining(opt.pretrain_path, checkpoints_dir, 4001 )
+VM.maintraining(opt.pretrain_path, checkpoints_dir, opt.epoch )
