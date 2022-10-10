@@ -1,5 +1,10 @@
 # VIRDO
 
+## Quick Start
+**Reconstruction & latent space composition** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/15T89qRkZuOFfcHYEa24mlZUuFeni1QqI#scrollTo=izxG2oGAriLK&uniqifier=1)
+
+**inference using partial pointcloud** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ZY5LVsKR8qN99C0EeyyqVnsWWg4v6vPN#scrollTo=f53ea8fc)
+
 ## Step 0: Set up the environment
 ```angular2html
 conda create -n virdo python=3.8
@@ -10,14 +15,6 @@ pip install open3d==0.14.1
 pip install plyfile==0.7.4
 pip install scikit-image
 ```
-## Colab Examples
-### Reconstruction & Latent Space Composition
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/15T89qRkZuOFfcHYEa24mlZUuFeni1QqI#scrollTo=izxG2oGAriLK&uniqifier=1)
-
-### Inference Using Partial Pointcloud
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ZY5LVsKR8qN99C0EeyyqVnsWWg4v6vPN#scrollTo=f53ea8fc)
-
 
 ## Preparation
 ### Step 1: Download pretrained model and dataset
