@@ -1,0 +1,9 @@
+{
+    "train": {
+        "spatula1_train": [-0.004, 0.0, -0.007],
+        "spatula2_train": [-0.01, -0.002, 0.0],
+        "spatula3_train": [-0.007, -0.00, 0.0],
+        "spatula4_train": [-0.01, 0.0, 0.0],
+    },
+    "generalization": {},
+}
