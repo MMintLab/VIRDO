@@ -1,8 +1,4 @@
 # VIRDO
-<<<<<<< HEAD
-=======
-
->>>>>>> 66980ae6ab93bc8a5faecb95da1f331211d4ec41
 ## Quick Start
 **Reconstruction & latent space composition** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/15T89qRkZuOFfcHYEa24mlZUuFeni1QqI#scrollTo=izxG2oGAriLK&uniqifier=1)
 
@@ -21,21 +17,16 @@ pip install scikit-image
 
 ## Step 1: Download pretrained model and dataset
 Make sure to install wget ```$ apt-get install wget``` and unzip ```$ apt-get install unzip```
-<<<<<<< HEAD
+
 ### Step 1: Download pretrained model and dataset
 Makesure to install curl ```$ apt-get install curl``` and unzip ```$ apt-get install unzip```
 
-=======
->>>>>>> 66980ae6ab93bc8a5faecb95da1f331211d4ec41
 ```angular2html
 source download.sh
 download_dataset
 download_pretrained
 ```
-<<<<<<< HEAD
 ### (Optionally) Manual
-=======
->>>>>>> 66980ae6ab93bc8a5faecb95da1f331211d4ec41
 Alternatively, you can manually download the datasets and pretrained models from [here](https://www.dropbox.com/sh/4gnme6f0srhnk23/AAABlA6n8cfyo-GsaiDEqLoba?dl=0). Then put the files as below:
 ```
 ── VIRDO
@@ -56,7 +47,6 @@ If you want to check the result of your pretrained model,
 ```
 python pretrain.py --checkpoints_dir <dir> --gpu_id 0
 ```
-<<<<<<< HEAD
 
 then you will see the nominal reconstructions in /output/ directory.
 
@@ -66,7 +56,3 @@ then you will see the nominal reconstructions in /output/ directory.
 python train.py --pretrain_path <path>  --checkpoints_dir <dir>
 ```
 then you will see the nominal reconstructions in /output/ directory.
-
-=======
-then you will see the nominal reconstructions in /output/ directory.
->>>>>>> 66980ae6ab93bc8a5faecb95da1f331211d4ec41
