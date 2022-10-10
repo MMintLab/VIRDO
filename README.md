@@ -58,4 +58,3 @@ then you will see the nominal reconstructions in /output/ directory.
 ```angular2html
 python train.py --pretrain_path <path>  --checkpoints_dir <dir>
 ```
-then you will see the nominal reconstructions in /output/ directory.
