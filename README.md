@@ -15,6 +15,8 @@ Codes are based on [siren](https://github.com/vsitzmann/siren) and [pointnet](ht
 conda create -n virdo python=3.8
 conda activate virdo
 conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 cudatoolkit=11.0 -c pytorch
+conda install -c fvcore -c iopath -c conda-forge fvcore iopath
+conda install -c bottler nvidiacub
 conda install pytorch3d=0.5.0 -c pytorch3d
 pip install open3d==0.14.1
 pip install plyfile==0.7.4
