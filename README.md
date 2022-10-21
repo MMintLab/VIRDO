@@ -22,6 +22,7 @@ pip install open3d==0.14.1
 pip install plyfile==0.7.4
 pip install scikit-image
 ```
+After installation, resource or reopen the terminal.
 
 ## Step 1: Download pretrained model and dataset
 Make sure to install wget ```$ apt-get install wget``` and unzip ```$ apt-get install unzip```
