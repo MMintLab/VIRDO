@@ -2,8 +2,12 @@ torch==1.7.0
 torchvision==0.8.1
 matplotlib==3.4.3
 pytorch3d
+--ignore-installed
 open3d
 plyfile
+pandas
+scikit-learn
 scikit-image
 tqdm==4.62.1
-scipy==1.7.1
+scipy==1.10.1
+chamferdist

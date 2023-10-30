@@ -18,9 +18,7 @@ conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 cudatoolkit=11
 conda install -c fvcore -c iopath -c conda-forge fvcore iopath
 conda install -c bottler nvidiacub
 conda install pytorch3d=0.5.0 -c pytorch3d
-pip install open3d==0.14.1
-pip install plyfile==0.7.4
-pip install scikit-image
+pip install -r environment.txt
 ```
 After installation, resource or reopen the terminal.
 
@@ -47,17 +45,17 @@ Alternatively, you can manually download the datasets and pretrained models from
 
 ## Step 2: Pretrain nominal shapes
 ```
-python pretrain.py --name <log name> --gpu_id 0
+python pretrain.py --config config/virdo.yaml --gpu_id 0
 ```
 If you want to check the result of your pretrained model, 
 ```
-python pretrain.py --checkpoints_dir <dir> --gpu_id 0
+python pretrain.py --config config/virdo.yaml --gpu_id 0 --from_pretrained logs/pretrain/checkpoints/shape_latest.pth
 ```
 
-then you will see the nominal reconstructions in /output/ directory.
+then you will see the nominal reconstructions in logs/pretrain/ply directory.
 
 
 ## Step 3: Train entire dataset
 ```angular2html
-python train.py --pretrain_path <path>  --checkpoints_dir <dir>
+python train.py --config config/virdo.yaml --gpu_id 0 --pretrain_path logs/pretrain/checkpoints/shape_latest.pth
 ```
