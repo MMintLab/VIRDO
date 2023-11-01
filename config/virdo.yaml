@@ -11,7 +11,8 @@ pretraining:
   checkpoint_dir: "logs/pretrain/checkpoints"
   ply_save_dir: "logs/pretrain/ply"
   save_freq: 500
-  cd_save_thresh: 0.005
+  avg_cd_save_thresh: 0.001
+  zero_level_eps: 0.00
 
   sdf_loss:
     k_sdf: 6.e+6
@@ -33,6 +34,7 @@ maintraining:
     interval: null
   checkpoint_dir: "logs/maintrain/checkpoints"
   save_freq: 1000
+  zero_level_eps: 0.00
 
   sdf_loss:
     k_sdf: 6.e+6

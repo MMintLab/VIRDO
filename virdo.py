@@ -263,7 +263,6 @@ class VirdoModule:
 
         ## Directories
         start_epoch = 0
-        checkpoints_dir = os.path.join(checkpoints_dir)
         make_dir(args['checkpoint_dir'])
         if os.path.exists(os.path.join(args['checkpoint_dir'], "main_latest.pth")):
             self.from_maintraining(args['checkpoint_dir'])

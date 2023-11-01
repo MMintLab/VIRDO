@@ -17,8 +17,9 @@ conda activate virdo
 conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 cudatoolkit=11.0 -c pytorch
 conda install -c fvcore -c iopath -c conda-forge fvcore iopath
 conda install -c bottler nvidiacub
-conda install pytorch3d=0.5.0 -c pytorch3d
-pip install -r environment.txt
+conda install pytorch3d=0.4.0 -c pytorch3d
+pip install -r requirements.txt
+pip install --ignore-installed open3d
 ```
 After installation, resource or reopen the terminal.
 
