@@ -142,7 +142,7 @@ def hyper_loss(model_output, gt_sdf, ks, ki, kg, gt_normals=None, kn=None):
     pred_sdf = model_output["model_out"].float()
 
     sdf_constraint = torch.where(
-        torch.abs(gt_sdf) == 0, torch.abs(pred_sdf), torch.zeros_like(pred_sdf)
+        gt_sdf == 0, torch.abs(pred_sdf), torch.zeros_like(pred_sdf)
     )
     losses['sdf'] = torch.abs(sdf_constraint).mean() * ks
 
@@ -150,7 +150,7 @@ def hyper_loss(model_output, gt_sdf, ks, ki, kg, gt_normals=None, kn=None):
     gt_sdf_c = torch.clip(gt_sdf, -0.3, 0.3).float()
 
     inter_constraint = torch.where(
-        torch.abs(gt_sdf) == 0, torch.zeros_like(pred_sdf), abs(gt_sdf_c - pred_sdf_c)
+        gt_sdf == 0, torch.zeros_like(pred_sdf), abs(gt_sdf_c - pred_sdf_c)
     )
     losses['inter'] = inter_constraint.mean() * ki
 
@@ -159,7 +159,7 @@ def hyper_loss(model_output, gt_sdf, ks, ki, kg, gt_normals=None, kn=None):
     if gt_normals is not None:
         norm = (1 - F.cosine_similarity(gradient, gt_normals, dim=-1))[..., None]
         normal_constraint = torch.where(
-            torch.abs(gt_sdf) == 0, norm, torch.zeros_like(gradient[..., :1])
+            gt_sdf == 0, norm, torch.zeros_like(gradient[..., :1])
         )
         losses['normal_constraint'] = normal_constraint.mean() * kn
 
@@ -176,7 +176,7 @@ def hyper_loss_deform(model_output, gt, kl, fw, ks, ki, kn, kg):
     pred_sdf = model_output["model_out"]
 
     sdf_constraint = torch.where(
-        torch.abs(gt_sdf) == 0, torch.abs(pred_sdf), torch.zeros_like(pred_sdf)
+        gt_sdf == 0, torch.abs(pred_sdf), torch.zeros_like(pred_sdf)
     )
     pred_sdf_c = torch.clip(pred_sdf, -0.3, 0.3)
     gt_sdf_c = torch.clip(gt_sdf, -0.3, 0.3)
@@ -190,7 +190,7 @@ def hyper_loss_deform(model_output, gt, kl, fw, ks, ki, kn, kg):
         norm = (1 - F.cosine_similarity(gradient, gt_normals, dim=-1))[..., None]
 
         normal_constraint = torch.where(
-            torch.abs(gt_sdf) == 0, norm, torch.zeros_like(gradient[..., :1])
+            gt_sdf == 0, norm, torch.zeros_like(gradient[..., :1])
         )
         grad_constraint = abs(1 - torch.linalg.norm(gradient, dim=-1))
     else:
