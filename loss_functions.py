@@ -130,7 +130,7 @@ def hypo_weight_loss(model_output):
     return weight_sum * (1 / total_weights)
 
 
-def hyper_loss(model_output, gt_sdf, ks, ki, kg, gt_normals=None, kn=None, eps=0.0):
+def hyper_loss(model_output, gt_sdf, ks, ki, kg, gt_normals=None, kn=None):
     losses = {}
     
     gt_sdf = gt_sdf.unsqueeze(0).float()
@@ -142,7 +142,7 @@ def hyper_loss(model_output, gt_sdf, ks, ki, kg, gt_normals=None, kn=None, eps=0
     pred_sdf = model_output["model_out"].float()
 
     sdf_constraint = torch.where(
-        torch.abs(gt_sdf) <= eps, torch.abs(pred_sdf), torch.zeros_like(pred_sdf)
+        torch.abs(gt_sdf) == 0, torch.abs(pred_sdf), torch.zeros_like(pred_sdf)
     )
     losses['sdf'] = torch.abs(sdf_constraint).mean() * ks
 
@@ -150,7 +150,7 @@ def hyper_loss(model_output, gt_sdf, ks, ki, kg, gt_normals=None, kn=None, eps=0
     gt_sdf_c = torch.clip(gt_sdf, -0.3, 0.3).float()
 
     inter_constraint = torch.where(
-        torch.abs(gt_sdf) <= eps, torch.zeros_like(pred_sdf), abs(gt_sdf_c - pred_sdf_c)
+        torch.abs(gt_sdf) == 0, torch.zeros_like(pred_sdf), abs(gt_sdf_c - pred_sdf_c)
     )
     losses['inter'] = inter_constraint.mean() * ki
 
@@ -159,7 +159,7 @@ def hyper_loss(model_output, gt_sdf, ks, ki, kg, gt_normals=None, kn=None, eps=0
     if gt_normals is not None:
         norm = (1 - F.cosine_similarity(gradient, gt_normals, dim=-1))[..., None]
         normal_constraint = torch.where(
-            torch.abs(gt_sdf) <= eps, norm, torch.zeros_like(gradient[..., :1])
+            torch.abs(gt_sdf) == 0, norm, torch.zeros_like(gradient[..., :1])
         )
         losses['normal_constraint'] = normal_constraint.mean() * kn
 
@@ -169,14 +169,14 @@ def hyper_loss(model_output, gt_sdf, ks, ki, kg, gt_normals=None, kn=None, eps=0
     return losses
 
 
-def hyper_loss_deform(model_output, gt, kl, fw, ks, ki, kn, kg, eps=0.0):
+def hyper_loss_deform(model_output, gt, kl, fw, ks, ki, kn, kg):
     gt_sdf = gt["sdf"]
 
     coords = model_output["model_in"]
     pred_sdf = model_output["model_out"]
 
     sdf_constraint = torch.where(
-        torch.abs(gt_sdf) <= eps, torch.abs(pred_sdf), torch.zeros_like(pred_sdf)
+        torch.abs(gt_sdf) == 0, torch.abs(pred_sdf), torch.zeros_like(pred_sdf)
     )
     pred_sdf_c = torch.clip(pred_sdf, -0.3, 0.3)
     gt_sdf_c = torch.clip(gt_sdf, -0.3, 0.3)
@@ -190,7 +190,7 @@ def hyper_loss_deform(model_output, gt, kl, fw, ks, ki, kn, kg, eps=0.0):
         norm = (1 - F.cosine_similarity(gradient, gt_normals, dim=-1))[..., None]
 
         normal_constraint = torch.where(
-            torch.abs(gt_sdf) <= eps, norm, torch.zeros_like(gradient[..., :1])
+            torch.abs(gt_sdf) == 0, norm, torch.zeros_like(gradient[..., :1])
         )
         grad_constraint = abs(1 - torch.linalg.norm(gradient, dim=-1))
     else:

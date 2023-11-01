@@ -12,17 +12,6 @@ import modules, meta_modules
 
 from typing import List
 
-class LRscheduler:
-    def __init__(self, initial:float, interval:int=None, decay:float=None) -> None:
-        self.initial = initial
-        self.interval = interval
-        self.decay = decay if decay is not None else 1.0
-
-    def get_lr(self, epoch) -> float:
-        if self.interval is None:
-            return self.initial
-        return self.initial * (self.decay ** (epoch // self.interval))
-
 class ObjectDecoder(torch.nn.Module):
     def __init__(self, shape_model, shape_embedding, device):
         super().__init__()
@@ -72,17 +61,6 @@ class VirdoModule:
             in_features=3, out_features=1, hyper_in_features=self.object_code_size, hl=2
         ).to(DEVICE).float()
 
-    def _init_lr_schedulers(self, schedules):
-        self.lr_schedulers: List[LRscheduler] = []
-        for schedule in schedules:
-            self.lr_schedulers.append(
-                LRscheduler(**schedule)
-            )
-
-    def _update_lr(self, epoch):
-        for i, params in enumerate(self.optims.param_groups):
-            params['lr'] = self.lr_schedulers[i].get_lr(epoch)
-
     def pretraining_result(self, pretrained_path, save_dir):
         self.from_pretraining(pretrained_path)
         make_dir(save_dir)
@@ -128,11 +106,10 @@ class VirdoModule:
         start_epoch = 0
         self.optims = torch.optim.Adam(
             [
-                {"params": self.object_code.parameters(), "lr": args['obj_code_lr_schedule']['initial']},
-                {"params": self.object_model.parameters(), "lr": args['network_lr_schedule']['initial']},
+                {"params": self.object_code.parameters(), "lr": args['obj_code_lr']},
+                {"params": self.object_model.parameters(), "lr": args['network_lr']},
             ]
         )
-        self._init_lr_schedulers((args['obj_code_lr_schedule'], args['network_lr_schedule']))
 
         ## If checkpoint directory exists,
         if os.path.exists(os.path.join(args['checkpoint_dir'], "shape_latest.pth")):
@@ -141,7 +118,6 @@ class VirdoModule:
             print("log loaded from epoch ", start_epoch)
 
         for epoch in trange(start_epoch, args['epochs']):
-            self._update_lr(epoch)
             tot_loss = 0
             cd_tot = 0
             for shape_idx, batch in self.data.items():
@@ -164,7 +140,6 @@ class VirdoModule:
                     ki=args['sdf_loss']['k_inter'],
                     kn=args['sdf_loss']['k_normal'],
                     kg=args['sdf_loss']['k_gradient'],
-                    eps=args['zero_level_eps']
                 )
 
                 nom_sdf_losses = 0
@@ -190,7 +165,7 @@ class VirdoModule:
                         shape_input_nom["embedding"],
                         self.device,
                     )
-                    cd = validation_3d(data_nom, decoder, eps=args['zero_level_eps'])
+                    cd = validation_3d(data_nom, decoder)
                     tqdm.write("cd = %s" % (str(cd.item())))
                     if cd == "nan":
                         cd = 1
@@ -256,10 +231,9 @@ class VirdoModule:
         ## Initialize Modules & optimizers
         self.from_pretraining(pretrained_path)
         self.optims = torch.optim.Adam([
-            {'params': self.force_model.parameters(), 'lr': args['force_module_lr_schedule']['initial']},
-            {'params': self.deformation_model.parameters(), 'lr': args['def_module_lr_schedule']['initial']}
+            {'params': self.force_model.parameters(), 'lr': args['force_module_lr']},
+            {'params': self.deformation_model.parameters(), 'lr': args['def_module_lr']}
         ])
-        self._init_lr_schedulers((args['force_module_lr_schedule'], args['def_module_lr_schedule']))
 
         ## Directories
         start_epoch = 0
@@ -276,7 +250,6 @@ class VirdoModule:
 
 
         for epoch in trange(start_epoch, args['epochs']):
-            self._update_lr(epoch)
             tot_loss = 0
             feats = {'f_emb': {}, 'cnt_ft' : {}}
 
@@ -327,7 +300,6 @@ class VirdoModule:
                         ki=args['sdf_loss']['k_inter'],
                         kn=args['sdf_loss']['k_normal'],
                         kg=args['sdf_loss']['k_gradient'],
-                        eps=args['zero_level_eps']
                     )
                     deform_sdf_losses = 0
                     for _, loss in deform_sdf_loss.items():
@@ -336,8 +308,8 @@ class VirdoModule:
 
 
                     ## Loss 2 : correspondence loss
-                    def_on_surf_idx = torch.where(torch.abs(data_def['gt']) <= args['zero_level_eps'])[1]
-                    nom_on_surf_idx = torch.where(torch.abs(data_nom['gt']) <= args['zero_level_eps'])[1]
+                    def_on_surf_idx = torch.where(torch.abs(data_def['gt']) == 0)[1]
+                    nom_on_surf_idx = torch.where(torch.abs(data_nom['gt']) == 0)[1]
                     cd_loss = chamfer_distance(
                         shape_input_def['model_out'][:,def_on_surf_idx ,:],
                         data_nom['coords'][:,nom_on_surf_idx,:].to(self.device)

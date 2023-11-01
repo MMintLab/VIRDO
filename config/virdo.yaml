@@ -1,18 +1,11 @@
 pretraining:
   epochs: 10000
-  network_lr_schedule:
-    initial: 1.e-4
-    decay: null
-    interval: null
-  obj_code_lr_schedule:
-    initial: 1.e-4
-    decay: null
-    interval: null
+  network_lr: 1.e-4
+  obj_code_lr: 1.e-4
   checkpoint_dir: "logs/pretrain/checkpoints"
   ply_save_dir: "logs/pretrain/ply"
   save_freq: 500
   avg_cd_save_thresh: 0.001
-  zero_level_eps: 0.00
 
   sdf_loss:
     k_sdf: 6.e+6
@@ -24,17 +17,10 @@ pretraining:
 
 maintraining:
   epochs: 4000
-  force_module_lr_schedule:
-    initial: 5.e-5
-    decay: null
-    interval: null
-  def_module_lr_schedule:
-    initial: 5.e-5
-    decay: null
-    interval: null
+  force_module_lr: 5.e-5
+  def_module_lr: 5.e-5
   checkpoint_dir: "logs/maintrain/checkpoints"
   save_freq: 1000
-  zero_level_eps: 0.00
 
   sdf_loss:
     k_sdf: 6.e+6
