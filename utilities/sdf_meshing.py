@@ -6,32 +6,33 @@ import logging
 import numpy as np
 import plyfile
 import skimage.measure
-import time, os, copy
+import time, os
 import torch
-import diff_operators
+from tqdm import tqdm
 
 
 def create_mesh(
     decoder,
     filename,
     N=256,
-    max_batch=40**3,
+    max_batch=32**3,
     offset=None,
     scale=None,
     output_return=True,
     verbose=True,
     manual_offset=None,
 ):
-    start = time.time()
     ply_filename = filename
 
     # NOTE: the voxel_origin is actually the (bottom, left, down) corner, not the middle
-    voxel_origin = [-1, -1, -1]
-    voxel_size = 2.0 / (N - 1)
+    box_side_len = 2.0
+    voxel_origin = torch.LongTensor([-box_side_len/2, -box_side_len/2, -box_side_len/2])
+    voxel_size = box_side_len / (N - 1)
 
-    overall_index = torch.arange(0, N**3, 1, out=torch.LongTensor())
-    samples = torch.zeros(N**3, 4)
-    normals = torch.zeros(N**3, 3)
+    num_samples = N**3
+
+    overall_index = torch.arange(0, num_samples, 1, out=torch.LongTensor())
+    samples = torch.zeros(num_samples, 4)
 
     # transform first 3 columns
     # to be the x, y, z index
@@ -41,17 +42,13 @@ def create_mesh(
 
     # transform first 3 columns
     # to be the x, y, z coordinate
-    samples[:, 0] = (samples[:, 0] * voxel_size) + voxel_origin[2]
-    samples[:, 1] = (samples[:, 1] * voxel_size) + voxel_origin[1]
-    samples[:, 2] = (samples[:, 2] * voxel_size) + voxel_origin[0]
-
-    num_samples = N**3
-
+    samples[:,:3] = samples[:,:3] * voxel_size + voxel_origin
     samples.requires_grad = False
 
     head = 0
 
     decoder.eval()
+    pbar = tqdm(total=num_samples, desc="Computing SDF grid")
     while head < num_samples:
         if verbose:
             print(head)
@@ -61,29 +58,23 @@ def create_mesh(
         samples[head : min(head + max_batch, num_samples), 3] = (
             output["model_out"].squeeze().detach().cpu()  # .squeeze(1)
         )
-        #         normals[head : min(head + max_batch, num_samples),:] = diff_operators.gradient(output['model_out'], output['model_in']).detach().cpu()
         head += max_batch
+        pbar.update(max_batch)
 
         del output["model_out"]
         del output["model_in"]
         torch.cuda.empty_cache()
+    pbar.close()
 
-    #     eps = 1e-5
-    #     idx = np.where(abs(samples[:,3])<eps)[0]
-    #     pointcloud_stale = np.concatenate([samples[idx,:3],normals[idx,:]], axis=1)
-
-    #     pointcloud_stale[:,3:6] = pointcloud_stale[:,3:6]/np.linalg.norm(pointcloud_stale[:,3:6], axis=1, keepdims = True)
-    #     write_files(ply_filename, pointcloud_stale)
     sdf_values = samples[:, 3]
     sdf_values = sdf_values.reshape(N, N, N)
 
-    end = time.time()
-
+    ply_filename_out = ply_filename+".ply" if ply_filename is not None else None
     mesh_points = convert_sdf_samples_to_ply(
         sdf_values.data.cpu(),
         voxel_origin,
         voxel_size,
-        ply_filename + ".ply",
+        ply_filename_out,
         offset,
         manual_offset,
         scale,
@@ -141,8 +132,6 @@ def convert_sdf_samples_to_ply(
     mesh_points[:, 1] = voxel_grid_origin[1] + verts[:, 1]
     mesh_points[:, 2] = voxel_grid_origin[2] + verts[:, 2]
 
-    mesh_points_ori = copy.deepcopy(mesh_points)
-
     # apply additional offset and scale
     if manual_offset is not None:
         print("compensated")
@@ -151,42 +140,37 @@ def convert_sdf_samples_to_ply(
         mesh_points = mesh_points / scale
     if offset is not None:
         mesh_points = mesh_points - offset
-    #     if scale is not None:
-    #         mesh_points = mesh_points * 1e3
 
     # try writing to the ply file
+    if ply_filename_out is not None:
+        num_verts = verts.shape[0]
+        num_faces = faces.shape[0]
 
-    num_verts = verts.shape[0]
-    num_faces = faces.shape[0]
+        verts_tuple = np.zeros((num_verts,), dtype=[("x", "f4"), ("y", "f4"), ("z", "f4")])
 
-    verts_tuple = np.zeros((num_verts,), dtype=[("x", "f4"), ("y", "f4"), ("z", "f4")])
+        for i in range(0, num_verts):
+            verts_tuple[i] = tuple(mesh_points[i, :])
 
-    for i in range(0, num_verts):
-        verts_tuple[i] = tuple(mesh_points[i, :])
+        faces_building = []
+        for i in range(0, num_faces):
+            faces_building.append(((faces[i, :].tolist(),)))
+        faces_tuple = np.array(faces_building, dtype=[("vertex_indices", "i4", (3,))])
 
-    faces_building = []
-    for i in range(0, num_faces):
-        faces_building.append(((faces[i, :].tolist(),)))
-    faces_tuple = np.array(faces_building, dtype=[("vertex_indices", "i4", (3,))])
+        el_verts = plyfile.PlyElement.describe(verts_tuple, "vertex")
+        el_faces = plyfile.PlyElement.describe(faces_tuple, "face")
 
-    el_verts = plyfile.PlyElement.describe(verts_tuple, "vertex")
-    el_faces = plyfile.PlyElement.describe(faces_tuple, "face")
-
-    if ply_filename_out != ".ply":
-        ply_data = plyfile.PlyData([el_verts, el_faces])
-        logging.debug("saving mesh to %s" % (ply_filename_out))
-        ply_data.write(ply_filename_out)
-        print(os.getcwd(), ply_filename_out, "saved")
-        logging.debug(
-            "converting to ply format and writing to file took {} s".format(
-                time.time() - start_time
+        if ply_filename_out != ".ply":
+            ply_data = plyfile.PlyData([el_verts, el_faces])
+            logging.debug("saving mesh to %s" % (ply_filename_out))
+            ply_data.write(ply_filename_out)
+            print(os.getcwd(), ply_filename_out, "saved")
+            logging.debug(
+                "converting to ply format and writing to file took {} s".format(
+                    time.time() - start_time
+                )
             )
-        )
 
     return mesh_points
-
-
-#     return mesh_points_ori
 
 
 def write_files(output_file, pointcloud):

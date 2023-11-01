@@ -31,7 +31,7 @@ def validation_3d(
     source_cloud = create_mesh(
         decoder,
         filename,
-        N=300,
+        N=256,
         output_return=True,
         verbose=False,
         scale=scale,
@@ -43,7 +43,7 @@ def validation_3d(
     iidx = np.random.permutation(source_cloud.shape[0])[:n]
     source_cloud = torch.tensor(source_cloud[iidx, :]).unsqueeze(0).float()
 
-    def_on_surf_idx = torch.where(dat["gt"] == 0)[1]
+    def_on_surf_idx = torch.where(torch.abs(dat["gt"]) == 0)[1]
     target_cloud = dat["coords"].reshape((-1, 3))[def_on_surf_idx, :]
     target_cloud = pcd_interest(target_cloud).unsqueeze(0)
     iidx = np.random.permutation(target_cloud.shape[1])[:n]

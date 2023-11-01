@@ -1,26 +1,25 @@
 import os
-import datetime
 import argparse
-import numpy as np
+import yaml
 import pickle
-import time, torch, importlib, math, sys
-import numpy as np
-import open3d as o3d
+import torch
 
-from utilities.train_util import data2pairs
 from virdo import VirdoModule
 
 root_path = os.getcwd()
 os.chdir(root_path)
-data_root_path = os.path.join(root_path, "Data")
-
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--name", default="pretrain")
-parser.add_argument("--gpu_id", default=-1, type=int)
-parser.add_argument("--checkpoints_dir", default="logs")
-parser.add_argument("--resume_dir", default="")
-parser.add_argument("--epoch", default=40001, type=int)
+parser.add_argument(
+    "--config",
+    required=True,
+    help="Path to config file"
+)
+parser.add_argument(
+    "--gpu_id",
+    default=-1,
+    type=int
+)
 parser.add_argument(
     "--from_pretrained",
     default=None,
@@ -28,29 +27,26 @@ parser.add_argument(
     help="Path to the pretrained model. If None, start training from scratch",
 )
 opt = parser.parse_args()
-#
 
+with open(opt.config, 'r') as file:
+    config_args = yaml.safe_load(file)
+pretraining_args = config_args["pretraining"]
 
 DEVICE = "cpu" if opt.gpu_id < 0 else "cuda"
 if DEVICE == "cuda":
     torch.cuda.set_device(opt.gpu_id)
+torch.cuda.empty_cache()
 
-
-with open("data/virdo_simul_dataset.pickle", "rb") as f:
+with open(config_args["dataset"]["data_save_path"], "rb") as f:
     data_dict = pickle.load(f)
-
-data_index = data2pairs(data_dict["train"])
-
 
 torch.manual_seed(300)
 torch.cuda.manual_seed(300)
 torch.cuda.manual_seed_all(300)
 
-VM = VirdoModule(data_dict["train"])
+VM = VirdoModule(data_dict["train"], network_specs=config_args['network_specs'], DEVICE=DEVICE)
 
-model_directory = os.path.join(root_path, "logs", opt.name)
-checkpoints_dir = os.path.join(model_directory, "checkpoints")
 if opt.from_pretrained is None:
-    VM.pretraining(checkpoints_dir, end_epoch=opt.epoch)
+    VM.pretraining(pretraining_args)
 else:
-    VM.pretraining_result(opt.from_pretrained, save_dir="output/")
+    VM.pretraining_result(opt.from_pretrained, pretraining_args['ply_save_dir'])

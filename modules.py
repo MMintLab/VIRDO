@@ -10,7 +10,6 @@ import torch.nn.functional as F
 import torch.nn.parallel
 import torch.utils.data
 from torch.autograd import Variable
-import diff_operators
 
 
 class STN3d(nn.Module):
@@ -39,7 +38,7 @@ class STN3d(nn.Module):
         x = self.fc3(x)
         iden = (
             Variable(
-                torch.from_numpy(np.array([1, 0, 0, 0, 1, 0, 0, 0, 1]).astype(np.float))
+                torch.from_numpy(np.array([1, 0, 0, 0, 1, 0, 0, 0, 1]).astype(float))
             )
             .view(1, 9)
             .repeat(batchsize, 1)
@@ -65,9 +64,7 @@ class PointNetfeat(nn.Module):
         if self.feature_transform:
             self.fstn = STN3d(k=64)
 
-    def forward(self, x, epoch):
-
-        n_pts = x.size()[2]
+    def forward(self, x):
         trans = self.stn(x)
         x = x.transpose(2, 1)
         x = torch.bmm(x, trans).float()
@@ -81,7 +78,7 @@ class PointNetfeat(nn.Module):
             x = x.transpose(2, 1)
         else:
             trans_feat = None
-        pointfeat = x
+
         x = F.relu(self.conv2(x))
         x = self.conv3(x)
         x = torch.mean(x, 2, keepdim=True)[0]
@@ -115,8 +112,8 @@ class PointNetCls(nn.Module):
         self.feat = PointNetfeat(global_feat=True)
         self.force_mlp = force_mlp(d_cnt_code, d_force_emb)
 
-    def forward(self, x, contact_force, epoch):
-        x = self.feat(x, epoch)
+    def forward(self, x, contact_force):
+        x = self.feat(x)
         x, self.cnt_ft = self.force_mlp(x, contact_force)
         return x
 

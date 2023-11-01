@@ -2,7 +2,6 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import diff_operators
-import modules
 
 
 def latent_loss(emb):
@@ -37,7 +36,6 @@ def info_nce_force_emb_reg(
 
         loss = loss - torch.log(p / (n + p))[0]
 
-    print(loss)
     return loss
 
 
@@ -54,7 +52,6 @@ def info_nce_reg(
         p = torch.sum(torch.exp(-p_))
 
         n_samples = torch.FloatTensor(N_neg).uniform_(-0.010, 0.010)
-        #         n_samples += torch.FloatTensor(N_neg).normal_(0 , 0.02)
         n_samples = n_samples.unsqueeze(-1).to(DEVICE)
 
         p_weight = emb_dic(idx_c).repeat(N_neg).reshape(N_neg, d)
@@ -67,7 +64,6 @@ def info_nce_reg(
 
         loss = loss - torch.log(p / (n + p))
 
-    print(loss)
     return loss
 
 
@@ -83,12 +79,8 @@ def info_nce(
         idx_list, np.where(idx_list == int(idx_f) * np.ones_like(idx_list))
     )
     np.random.shuffle(idx_list)
-    n_idx = idx_list[:N_neg]
 
     n = 0
-    mean = torch.mean(emb_dic.weight)
-    std = torch.std(emb_dic.weight)
-
     d = emb_dic.weight.size()[1]
     n_samples = torch.zeros((N_neg, d))
     for i in range(d):
@@ -97,31 +89,14 @@ def info_nce(
     n_samples = n_samples.to(DEVICE)
 
     p_weight = emb_dic(idx_c).repeat(N_neg).reshape(N_neg, d)
-    #     n_samples = torch.FloatTensor(N_neg, d).uniform_(-0.15 , 0.15).to(DEVICE)
-
-    #     p_weight = emb_dic(idx_c).repeat(N_neg).reshape(N_neg,d)
-    #     n_samples = torch.FloatTensor(N_neg, 1).uniform_(-0.1 , 0.1)
-
-    #     n_samples += p_weight
 
     actions = a_t.repeat(N_neg).reshape(N_neg, 7)
     ef_input = torch.cat((p_weight, n_samples, actions), dim=1)
     n_tmp = torch.clip(energy_function(ef_input)[0], -5, 5)
     n = torch.sum(torch.exp(-n_tmp))
 
-    # #     print(idx_c, idx_f,n_idx)
-    #     for idx, cnt_idx in enumerate(n_idx):
-    # #         n_tmp = energy_function(torch.cat([ emb_dic(idx_c) , emb_dic( torch.tensor(cnt_idx).to(DEVICE)), a_t], axis=0))
-    #         n_tmp = energy_function(torch.cat([ emb_dic(idx_c) , n_samples[idx,:].to(DEVICE), a_t], axis=0))
-    #         n += torch.exp(-n_tmp)
-
-    #     p = torch.clip(p, 1e-4, 1e4)
-    #     n = torch.clip(n, 1e-4, 1e4)
-
     loss = -torch.log(p / (n + p))
 
-    #     loss =  (n + p) / p
-    print(n, p, n_tmp, p_, loss)
     return loss[0]
 
 
@@ -155,9 +130,13 @@ def hypo_weight_loss(model_output):
     return weight_sum * (1 / total_weights)
 
 
-def hyper_loss(model_output, gt_sdf, gt_normals, ks, ki, kn, kg):
+def hyper_loss(model_output, gt_sdf, ks, ki, kg, gt_normals=None, kn=None):
+    losses = {}
+    
     gt_sdf = gt_sdf.unsqueeze(0).float()
-    gt_normals = gt_normals.unsqueeze(0).float()
+
+    if gt_normals is not None:
+        gt_normals = gt_normals.unsqueeze(0).float()
 
     coords = model_output["model_in"].float()
     pred_sdf = model_output["model_out"].float()
@@ -165,6 +144,7 @@ def hyper_loss(model_output, gt_sdf, gt_normals, ks, ki, kn, kg):
     sdf_constraint = torch.where(
         gt_sdf == 0, torch.abs(pred_sdf), torch.zeros_like(pred_sdf)
     )
+    losses['sdf'] = torch.abs(sdf_constraint).mean() * ks
 
     pred_sdf_c = torch.clip(pred_sdf, -0.3, 0.3).float()
     gt_sdf_c = torch.clip(gt_sdf, -0.3, 0.3).float()
@@ -172,21 +152,21 @@ def hyper_loss(model_output, gt_sdf, gt_normals, ks, ki, kn, kg):
     inter_constraint = torch.where(
         gt_sdf == 0, torch.zeros_like(pred_sdf), abs(gt_sdf_c - pred_sdf_c)
     )
+    losses['inter'] = inter_constraint.mean() * ki
+
     gradient = diff_operators.gradient(pred_sdf, coords)
 
-    norm = (1 - F.cosine_similarity(gradient, gt_normals, dim=-1))[..., None]
-    normal_constraint = torch.where(
-        gt_sdf == 0, norm, torch.zeros_like(gradient[..., :1])
-    )
+    if gt_normals is not None:
+        norm = (1 - F.cosine_similarity(gradient, gt_normals, dim=-1))[..., None]
+        normal_constraint = torch.where(
+            gt_sdf == 0, norm, torch.zeros_like(gradient[..., :1])
+        )
+        losses['normal_constraint'] = normal_constraint.mean() * kn
 
     grad_constraint = abs(1 - torch.clip(torch.linalg.norm(gradient, dim=-1), 0, 1))
+    losses['grad_constraint'] = grad_constraint.mean() * kg
 
-    return {
-        "sdf": torch.abs(sdf_constraint).mean() * ks,  # 1e5 # 1e4      # 3e3
-        "inter": inter_constraint.mean() * ki,  # 1e2                   # 1e3
-        "normal_constraint": normal_constraint.mean() * kn,  # 1e2 ####YS
-        "grad_constraint": grad_constraint.mean() * kg,
-    }  # 1e1      # 5e1
+    return losses
 
 
 def hyper_loss_deform(model_output, gt, kl, fw, ks, ki, kn, kg):
@@ -216,15 +196,12 @@ def hyper_loss_deform(model_output, gt, kl, fw, ks, ki, kn, kg):
     else:
         normal_constraint = torch.tensor([0]).float()
         grad_constraint = torch.tensor([0]).float()
-    # print(grad_constraint)
 
-    # Exp      # Lapl
-    # -----------------
     return {
         "latent_loss": kl * latent_loss(model_output),
         "hypo_weight_loss": fw * hypo_weight_loss(model_output),
-        "sdf": torch.abs(sdf_constraint).mean() * ks,  # 1e5 # 1e4      # 3e3
-        "inter": inter_constraint.mean() * ki,  # 1e2                   # 1e3
-        "normal_constraint": normal_constraint.mean() * kn,  # 1e2 ####YS
+        "sdf": torch.abs(sdf_constraint).mean() * ks,
+        "inter": inter_constraint.mean() * ki,
+        "normal_constraint": normal_constraint.mean() * kn,
         "grad_constraint": grad_constraint.mean() * kg,
-    }  # 1e1      # 5e1
+    }

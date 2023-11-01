@@ -1,0 +1,44 @@
+pretraining:
+  epochs: 10000
+  network_lr: 1.e-4
+  obj_code_lr: 1.e-4
+  checkpoint_dir: "logs/pretrain/checkpoints"
+  ply_save_dir: "logs/pretrain/ply"
+  save_freq: 500
+  avg_cd_save_thresh: 0.001
+
+  sdf_loss:
+    k_sdf: 6.e+6
+    k_inter: 3.e+4
+    k_normal: 5.e+1
+    k_gradient: 0
+  k_hypo_loss: 1.e+2
+  k_emb_loss: 1.e+2
+
+maintraining:
+  epochs: 4000
+  force_module_lr: 5.e-5
+  def_module_lr: 5.e-5
+  checkpoint_dir: "logs/maintrain/checkpoints"
+  save_freq: 1000
+
+  sdf_loss:
+    k_sdf: 6.e+6
+    k_inter: 3.e+4
+    k_normal: 5.e+1
+    k_gradient: 0
+  k_hypo_loss: 1.e+2
+  k_emb_loss: 1.e+2
+  k_cd_loss: 5.e+4
+
+test:
+  result_save_dir: "logs/virdo/test"
+
+network_specs:
+  obj_code_size: 6
+  contact_emb_size: 4
+  def_code_size: 12
+
+dataset:
+  data_save_path: "data/virdo_simul_dataset.pickle" 
+  
